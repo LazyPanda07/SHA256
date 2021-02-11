@@ -1,12 +1,18 @@
 #pragma once
 
+#ifdef SHA256_DLL
+#define SHA256_API __declspec(dllexport)
+#else
+#define SHA256_API
+#endif // SHA256_DLL
+
 #include <string>
 #include <array>
 #include <sstream>
 
 namespace encoding
 {
-	class SHA256
+	class SHA256_API SHA256
 	{
 	public:
 		static constexpr uint32_t  sha256InBitsSize = 256;
@@ -51,11 +57,11 @@ namespace encoding
 	public:
 		SHA256(outputType type = outputType::hexadecimal);
 
+		SHA256(const std::string& data, outputType type = outputType::hexadecimal);
+
 		SHA256(const SHA256& other);
 
 		SHA256(SHA256&& other) noexcept;
-
-		SHA256(const std::string& data, outputType type = outputType::hexadecimal);
 
 		SHA256& operator = (const SHA256& other);
 
@@ -91,7 +97,7 @@ namespace encoding
 		/// <param name="stream">std::ostream subclass</param>
 		/// <param name="sha">instance to SHA256</param>
 		/// <returns>stream</returns>
-		friend std::ostream& operator << (std::ostream& stream, const SHA256& sha);
+		friend SHA256_API std::ostream& operator << (std::ostream& stream, const SHA256& sha);
 
 		~SHA256() = default;
 	};

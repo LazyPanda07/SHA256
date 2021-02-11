@@ -70,6 +70,13 @@ namespace encoding
 
 	}
 
+	SHA256::SHA256(const string& data, outputType type) :
+		data(data),
+		type(type)
+	{
+
+	}
+
 	SHA256::SHA256(const SHA256& other) :
 		data(other.data),
 		type(other.type)
@@ -80,13 +87,6 @@ namespace encoding
 	SHA256::SHA256(SHA256&& other) noexcept :
 		data(move(other.data)),
 		type(other.type)
-	{
-
-	}
-
-	SHA256::SHA256(const string& data, outputType type) :
-		data(data),
-		type(type)
 	{
 
 	}
