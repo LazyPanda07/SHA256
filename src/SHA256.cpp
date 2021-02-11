@@ -68,6 +68,72 @@ namespace encoding
 		return result;
 	}
 
+	void SHA256::mainLoop(string_view nextBlock, vector<uint32_t>& currentValues)
+	{
+		array<string, 64> w;
+		string tem;
+		size_t zeroIndex = 0;
+
+		for (size_t i = 0, j = 0; i < nextBlock.size(); i++)
+		{
+			if (i && !(i % 32))	// 32 bits words in w array
+			{
+				w[j++] = move(tem);
+			}
+
+			tem += nextBlock[i];
+		}
+
+		w[15] = move(tem);
+
+		for_each(w.begin() + 16, w.end(), [](string& value) { value = string(32, '0'); });
+
+		for (size_t i = 16; i < w.size(); i++)
+		{
+			uint32_t s0 = stoul(rightRotate(w[i - 15], 7), &zeroIndex, 2) ^ stoul(rightRotate(w[i - 15], 18), &zeroIndex, 2) ^ stoul(rightShift(w[i - 15], 3), &zeroIndex, 2);
+			uint32_t s1 = stoul(rightRotate(w[i - 2], 17), &zeroIndex, 2) ^ stoul(rightRotate(w[i - 2], 19), &zeroIndex, 2) ^ stoul(rightShift(w[i - 2], 10), &zeroIndex, 2);
+
+			w[i] = toBinary((stoul(w[i - 16], &zeroIndex, 2) + s0 + stoul(w[i - 7], &zeroIndex, 2) + s1) % additionModulo);
+		}
+
+		uint32_t a = currentValues[0];
+		uint32_t b = currentValues[1];
+		uint32_t c = currentValues[2];
+		uint32_t d = currentValues[3];
+		uint32_t e = currentValues[4];
+		uint32_t f = currentValues[5];
+		uint32_t g = currentValues[6];
+		uint32_t h = currentValues[7];
+
+		for (size_t i = 0; i < w.size(); i++)
+		{
+			uint32_t s1 = rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25);
+			uint32_t ch = (e & f) ^ (~e & g);
+			uint32_t temp1 = (h + s1 + ch + k[i] + stoul(w[i], &zeroIndex, 2)) % additionModulo;
+			uint32_t s0 = rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22);
+			uint32_t maj = (a & b) ^ (a & c) ^ (b & c);
+			uint32_t temp2 = (s0 + maj) % additionModulo;
+
+			h = g;
+			g = f;
+			f = e;
+			e = (d + temp1) % additionModulo;
+			d = c;
+			c = b;
+			b = a;
+			a = (temp1 + temp2) % additionModulo;
+		}
+
+		currentValues[0] += a;
+		currentValues[1] += b;
+		currentValues[2] += c;
+		currentValues[3] += d;
+		currentValues[4] += e;
+		currentValues[5] += f;
+		currentValues[6] += g;
+		currentValues[7] += h;
+	}
+
 	SHA256::SHA256(outputType type) :
 		type(type)
 	{
@@ -152,66 +218,32 @@ namespace encoding
 			}()
 				);
 
-
-		for (size_t i = 0, j = 0; i < binaryData.size(); i++)
+		vector<uint32_t> values =
 		{
-			if (i && !(i % 32))	// 32 bits words in w array
-			{
-				w[j++] = move(tem);
-			}
+			h0,
+			h1,
+			h2,
+			h3,
+			h4,
+			h5,
+			h6,
+			h7
+		};
 
-			tem += binaryData[i];
-		}
-
-		w[15] = move(tem);
-
-		for_each(w.begin() + 16, w.end(), [](string& value) { value = string(32, '0'); });
-
-		for (size_t i = 16; i < w.size(); i++)
+		for (size_t i = 0; i < binaryData.size(); i += 512)
 		{
-			uint32_t s0 = stoul(rightRotate(w[i - 15], 7), &zeroIndex, 2) ^ stoul(rightRotate(w[i - 15], 18), &zeroIndex, 2) ^ stoul(rightShift(w[i - 15], 3), &zeroIndex, 2);
-			uint32_t s1 = stoul(rightRotate(w[i - 2], 17), &zeroIndex, 2) ^ stoul(rightRotate(w[i - 2], 19), &zeroIndex, 2) ^ stoul(rightShift(w[i - 2], 10), &zeroIndex, 2);
-
-			w[i] = toBinary((stoul(w[i - 16], &zeroIndex, 2) + s0 + stoul(w[i - 7], &zeroIndex, 2) + s1) % additionModulo);
-		}
-
-		uint32_t a = h0;
-		uint32_t b = h1;
-		uint32_t c = h2;
-		uint32_t d = h3;
-		uint32_t e = h4;
-		uint32_t f = h5;
-		uint32_t g = h6;
-		uint32_t h = h7;
-
-		for (size_t i = 0; i < w.size(); i++)
-		{
-			uint32_t s1 = rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25);
-			uint32_t ch = (e & f) ^ (~e & g);
-			uint32_t temp1 = (h + s1 + ch + k[i] + stoul(w[i], &zeroIndex, 2)) % additionModulo;
-			uint32_t s0 = rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22);
-			uint32_t maj = (a & b) ^ (a & c) ^ (b & c);
-			uint32_t temp2 = (s0 + maj) % additionModulo;
-
-			h = g;
-			g = f;
-			f = e;
-			e = (d + temp1) % additionModulo;
-			d = c;
-			c = b;
-			b = a;
-			a = (temp1 + temp2) % additionModulo;
+			mainLoop(string_view(binaryData.data() + i, 512), values);
 		}
 
 		result =
-			toBinary((h0 + a) % additionModulo) +
-			toBinary((h1 + b) % additionModulo) +
-			toBinary((h2 + c) % additionModulo) +
-			toBinary((h3 + d) % additionModulo) +
-			toBinary((h4 + e) % additionModulo) +
-			toBinary((h5 + f) % additionModulo) +
-			toBinary((h6 + g) % additionModulo) +
-			toBinary((h7 + h) % additionModulo);
+			toBinary(values[0] % additionModulo) +
+			toBinary(values[1] % additionModulo) +
+			toBinary(values[2] % additionModulo) +
+			toBinary(values[3] % additionModulo) +
+			toBinary(values[4] % additionModulo) +
+			toBinary(values[5] % additionModulo) +
+			toBinary(values[6] % additionModulo) +
+			toBinary(values[7] % additionModulo);
 
 		switch (type)
 		{
@@ -300,7 +332,7 @@ namespace encoding
 		{
 			uint32_t s0 = rightRotate(w[i - 15], 7) ^ rightRotate(w[i - 15], 18) ^ rightShift(w[i - 15], 3);
 			uint32_t s1 = rightRotate(w[i - 2], 17) ^ rightRotate(w[i - 2], 19) ^ rightShift(w[i - 2], 10);
-			
+
 			w[i] = (w[i - 16] + s0 + w[i - 7] + s1) % additionModulo;
 		}
 
