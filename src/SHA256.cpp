@@ -4,6 +4,8 @@
 #include <bitset>
 #include <algorithm>
 
+#include <fstream>
+
 #define CHAR_BIT 8
 
 #pragma warning(disable: 4146) // unary - on unsigned rightRotate
@@ -26,6 +28,8 @@ string rightRotate(const string& binaryString, uint32_t count);
 uint32_t rightRotate(uint32_t value, uint32_t count);
 
 string rightShift(const string& binaryString, uint32_t count);
+
+uint32_t rightShift(uint32_t value, uint32_t count);
 
 void appendBit(string& binaryData, appendType type);
 
@@ -99,7 +103,7 @@ namespace encoding
 		return *this;
 	}
 
-	SHA256 & SHA256::operator = (SHA256&& other) noexcept
+	SHA256& SHA256::operator = (SHA256&& other) noexcept
 	{
 		data = move(other.data);
 		type = other.type;
@@ -199,7 +203,136 @@ namespace encoding
 			a = (temp1 + temp2) % additionModulo;
 		}
 
-		result = 
+		result =
+			toBinary((h0 + a) % additionModulo) +
+			toBinary((h1 + b) % additionModulo) +
+			toBinary((h2 + c) % additionModulo) +
+			toBinary((h3 + d) % additionModulo) +
+			toBinary((h4 + e) % additionModulo) +
+			toBinary((h5 + f) % additionModulo) +
+			toBinary((h6 + g) % additionModulo) +
+			toBinary((h7 + h) % additionModulo);
+
+		switch (type)
+		{
+		case encoding::SHA256::outputType::binary:
+			return result;
+
+		case encoding::SHA256::outputType::hexadecimal:
+			return hexConversion(result);
+
+		default:
+			throw runtime_error("Unknown error");
+		}
+	}
+
+	string SHA256::optimizedEncode() const
+	{
+		string binaryData = data;
+		array<uint32_t, 64> w = {};
+		size_t zeroIndex = 0;
+		string result;
+
+		result.reserve(sha256InBitsSize);
+
+		auto appendBit = [](string& binaryData, appendType type) -> void
+		{
+			switch (type)
+			{
+			case appendType::zero:
+				binaryData += static_cast<char>(0);
+				break;
+
+			case appendType::one:
+				binaryData += static_cast<char>(128);
+				break;
+			}
+		};
+
+		appendBit(binaryData, appendType::one);
+
+		while (binaryData.size() % 64 != 56)
+		{
+			appendBit(binaryData, appendType::zero);
+		}
+
+		binaryData += [this]() -> string
+		{
+			string tem;
+			uint64_t size = 0;
+			char* ptr = reinterpret_cast<char*>(&size) + sizeof(size) - 1;	// big-endian
+
+			tem.reserve(data.size() * CHAR_BIT);
+
+			for (const auto& i : data)
+			{
+				tem += toBinary(i);
+			}
+
+			size = tem.size();
+			tem.clear();
+
+			for (size_t i = 0; i < sizeof(size); i++)
+			{
+				tem += *ptr--;
+			}
+
+			return tem;
+		}();
+
+		for (size_t i = 0, j = 0; i < binaryData.size(); i += 4, j++)
+		{
+			uint32_t value = 0;
+			char* ptr = reinterpret_cast<char*>(&value) + sizeof(value) - 1;
+			char* currentPtr = binaryData.data() + i;
+
+			for (size_t k = 0; k < sizeof(uint32_t); k++)
+			{
+				*ptr-- = *currentPtr++;
+			}
+
+			w[j] = value;
+		}
+
+		for_each(w.begin() + 16, w.end(), [](uint32_t& value) { value = 0; });
+
+		for (size_t i = 16; i < w.size(); i++)
+		{
+			uint32_t s0 = rightRotate(w[i - 15], 7) ^ rightRotate(w[i - 15], 18) ^ rightShift(w[i - 15], 3);
+			uint32_t s1 = rightRotate(w[i - 2], 17) ^ rightRotate(w[i - 2], 19) ^ rightShift(w[i - 2], 10);
+			
+			w[i] = (w[i - 16] + s0 + w[i - 7] + s1) % additionModulo;
+		}
+
+		uint32_t a = h0;
+		uint32_t b = h1;
+		uint32_t c = h2;
+		uint32_t d = h3;
+		uint32_t e = h4;
+		uint32_t f = h5;
+		uint32_t g = h6;
+		uint32_t h = h7;
+
+		for (size_t i = 0; i < w.size(); i++)
+		{
+			uint32_t s1 = rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25);
+			uint32_t ch = (e & f) ^ (~e & g);
+			uint32_t temp1 = (h + s1 + ch + k[i] + w[i]) % additionModulo;
+			uint32_t s0 = rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22);
+			uint32_t maj = (a & b) ^ (a & c) ^ (b & c);
+			uint32_t temp2 = (s0 + maj) % additionModulo;
+
+			h = g;
+			g = f;
+			f = e;
+			e = (d + temp1) % additionModulo;
+			d = c;
+			c = b;
+			b = a;
+			a = (temp1 + temp2) % additionModulo;
+		}
+
+		result =
 			toBinary((h0 + a) % additionModulo) +
 			toBinary((h1 + b) % additionModulo) +
 			toBinary((h2 + c) % additionModulo) +
@@ -261,7 +394,7 @@ namespace encoding
 template<typename T>
 string toBinary(const T& value)
 {
-	return (stringstream() << bitset<sizeof(T) * CHAR_BIT>(value)).str();
+	return (stringstream() << bitset<sizeof(T)* CHAR_BIT>(value)).str();
 }
 
 string rightRotate(const string& binaryString, uint32_t count)
@@ -296,6 +429,11 @@ string rightShift(const string& binaryString, uint32_t count)
 	replace_if(tem.begin(), tem.begin() + count, [](const auto& value) { return true; }, '0');
 
 	return tem;
+}
+
+uint32_t rightShift(uint32_t value, uint32_t count)
+{
+	return value >> count;
 }
 
 void appendBit(string& binaryData, appendType type)

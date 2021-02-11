@@ -74,6 +74,8 @@ namespace encoding
 		/// <returns>SHA256 encoded string</returns>
 		std::string encode() const;
 
+		std::string optimizedEncode() const;
+
 		/// <summary>
 		/// Setter for type
 		/// </summary>
