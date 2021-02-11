@@ -15,8 +15,9 @@ namespace encoding
 	class SHA256_API SHA256
 	{
 	public:
-		static constexpr uint32_t  sha256InBitsSize = 256;
-		static constexpr uint32_t sha256InBytesSize = 64;
+		static constexpr uint32_t sha256InBitsSize = 256;
+		static constexpr uint32_t sha256InBytesSize = 32;
+		static constexpr uint32_t sha256StringSize = 64;
 
 	public:
 		enum class outputType
@@ -74,12 +75,6 @@ namespace encoding
 		std::string encode() const;
 
 		/// <summary>
-		/// Getter for data
-		/// </summary>
-		/// <returns>const reference to data</returns>
-		const std::string& operator * () const;
-
-		/// <summary>
 		/// Setter for type
 		/// </summary>
 		/// <param name="type">new type</param>
@@ -92,10 +87,34 @@ namespace encoding
 		outputType getOutputType() const;
 
 		/// <summary>
+		/// Setter for data
+		/// </summary>
+		/// <param name="data">string to encode</param>
+		void setData(const std::string& data);
+
+		/// <summary>
+		/// Setter for data
+		/// </summary>
+		/// <param name="data">string to encode</param>
+		void setData(std::string&& data) noexcept;
+
+		/// <summary>
+		/// Getter for data
+		/// </summary>
+		/// <returns>const reference to data</returns>
+		const std::string& getData() const;
+
+		/// <summary>
+		/// Getter for data
+		/// </summary>
+		/// <returns>const reference to data</returns>
+		const std::string& operator * () const;
+
+		/// <summary>
 		/// Set to output stream SHA256 encoded data
 		/// </summary>
 		/// <param name="stream">std::ostream subclass</param>
-		/// <param name="sha">instance to SHA256</param>
+		/// <param name="sha">instance of SHA256</param>
 		/// <returns>stream</returns>
 		friend SHA256_API std::ostream& operator << (std::ostream& stream, const SHA256& sha);
 

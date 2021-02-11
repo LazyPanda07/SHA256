@@ -54,7 +54,7 @@ namespace encoding
 		};
 		string result;
 
-		result.reserve(SHA256::sha256InBytesSize);
+		result.reserve(SHA256::sha256StringSize);
 
 		for (size_t i = 0; i < binaryString.size(); i += 4)
 		{
@@ -222,11 +222,6 @@ namespace encoding
 		}
 	}
 
-	const string& SHA256::operator * () const
-	{
-		return data;
-	}
-
 	void SHA256::setOutputType(outputType type)
 	{
 		this->type = type;
@@ -235,6 +230,26 @@ namespace encoding
 	SHA256::outputType SHA256::getOutputType() const
 	{
 		return type;
+	}
+
+	void SHA256::setData(const string& data)
+	{
+		this->data = data;
+	}
+
+	void SHA256::setData(string&& data) noexcept
+	{
+		this->data = move(data);
+	}
+
+	const string& SHA256::getData() const
+	{
+		return data;
+	}
+
+	const string& SHA256::operator * () const
+	{
+		return data;
 	}
 
 	ostream& operator << (ostream& stream, const SHA256& sha)
