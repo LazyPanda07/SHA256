@@ -32,6 +32,8 @@ namespace encoding
 
 		static void mainLoop(std::string_view nextBlock, std::vector<uint32_t>& currentValues); 
 
+		static void mainLoopOptimized(std::string_view nextBlock, std::vector<uint32_t>& currentValues);
+
 	private:
 		static constexpr uint32_t h0 = 0x6a09e667;
 		static constexpr uint32_t h1 = 0xbb67ae85;
