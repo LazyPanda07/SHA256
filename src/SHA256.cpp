@@ -4,6 +4,8 @@
 #include <bitset>
 #include <algorithm>
 
+#define CHAR_BIT 8
+
 #pragma warning(disable: 4146) // unary - on unsigned rightRotate
 #pragma warning(disable: 6260)
 #pragma warning(disable: 6290) // unary ! on unsigned
@@ -29,10 +31,80 @@ void appendBit(string& binaryData, appendType type);
 
 namespace encoding
 {
-	SHA256::SHA256(const string& data) :
-		data(data)
+	string SHA256::hexConversion(const string& binaryString)
+	{
+		static const unordered_map<string_view, char> alphabet =
+		{
+			{ "0000", '0' },
+			{ "0001", '1' },
+			{ "0010", '2' },
+			{ "0011", '3' },
+			{ "0100", '4' },
+			{ "0101", '5' },
+			{ "0110", '6' },
+			{ "0111", '7' },
+			{ "1000", '8' },
+			{ "1001", '9' },
+			{ "1010", 'A' },
+			{ "1011", 'B' },
+			{ "1100", 'C' },
+			{ "1101", 'D' },
+			{ "1110", 'E' },
+			{ "1111", 'F' },
+		};
+		string result;
+
+		result.reserve(SHA256::sha256InBytesSize);
+
+		for (size_t i = 0; i < binaryString.size(); i += 4)
+		{
+			result += alphabet.at(string_view(binaryString.data() + i, 4));
+		}
+
+		return result;
+	}
+
+	SHA256::SHA256(outputType type) :
+		type(type)
 	{
 
+	}
+
+	SHA256::SHA256(const SHA256& other) :
+		data(other.data),
+		type(other.type)
+	{
+
+	}
+
+	SHA256::SHA256(SHA256&& other) noexcept :
+		data(move(other.data)),
+		type(other.type)
+	{
+
+	}
+
+	SHA256::SHA256(const string& data, outputType type) :
+		data(data),
+		type(type)
+	{
+
+	}
+
+	SHA256& SHA256::operator = (const SHA256& other)
+	{
+		data = other.data;
+		type = other.type;
+
+		return *this;
+	}
+
+	SHA256 & SHA256::operator = (SHA256&& other) noexcept
+	{
+		data = move(other.data);
+		type = other.type;
+
+		return *this;
 	}
 
 	string SHA256::encode() const
@@ -41,12 +113,15 @@ namespace encoding
 		array<string, 64> w;
 		string tem;
 		size_t zeroIndex = 0;
+		string result;
 
-		binaryData.reserve(data.size() * sizeof(uint64_t));
+		result.reserve(sha256InBitsSize);
+
+		binaryData.reserve(data.size() * CHAR_BIT);
 
 		for (const auto& i : data)
 		{
-			binaryData += toBinary<uint64_t>(i);
+			binaryData += toBinary(i);
 		}
 
 		appendBit(binaryData, appendType::one);
@@ -62,11 +137,11 @@ namespace encoding
 			{
 				string tem;
 
-				tem.reserve(data.size() * sizeof(uint64_t));
+				tem.reserve(data.size() * CHAR_BIT);
 
 				for (const auto& i : data)
 				{
-					tem += toBinary<uint64_t>(i);
+					tem += toBinary(i);
 				}
 
 				return tem.size();
@@ -76,7 +151,7 @@ namespace encoding
 
 		for (size_t i = 0, j = 0; i < binaryData.size(); i++)
 		{
-			if (i && !(i % 32))
+			if (i && !(i % 32))	// 32 bits words in w array
 			{
 				w[j++] = move(tem);
 			}
@@ -86,10 +161,7 @@ namespace encoding
 
 		w[15] = move(tem);
 
-		for (size_t i = 16; i < w.size(); i++)
-		{
-			w[i] = string(32, '0');
-		}
+		for_each(w.begin() + 16, w.end(), [](string& value) { value = string(32, '0'); });
 
 		for (size_t i = 16; i < w.size(); i++)
 		{
@@ -127,7 +199,7 @@ namespace encoding
 			a = (temp1 + temp2) % additionModulo;
 		}
 
-		return
+		result = 
 			toBinary((h0 + a) % additionModulo) +
 			toBinary((h1 + b) % additionModulo) +
 			toBinary((h2 + c) % additionModulo) +
@@ -136,6 +208,18 @@ namespace encoding
 			toBinary((h5 + f) % additionModulo) +
 			toBinary((h6 + g) % additionModulo) +
 			toBinary((h7 + h) % additionModulo);
+
+		switch (type)
+		{
+		case encoding::SHA256::outputType::binary:
+			return result;
+
+		case encoding::SHA256::outputType::hexadecimal:
+			return hexConversion(result);
+
+		default:
+			throw runtime_error("Unknown error");
+		}
 	}
 
 	const string& SHA256::operator * () const
@@ -143,46 +227,26 @@ namespace encoding
 		return data;
 	}
 
+	void SHA256::setOutputType(outputType type)
+	{
+		this->type = type;
+	}
+
+	SHA256::outputType SHA256::getOutputType() const
+	{
+		return type;
+	}
+
 	ostream& operator << (ostream& stream, const SHA256& sha)
 	{
-		static const unordered_map<string_view, char> alphabet =
-		{
-			{ "0000", '0' },
-			{ "0001", '1' },
-			{ "0010", '2' },
-			{ "0011", '3' },
-			{ "0100", '4' },
-			{ "0101", '5' },
-			{ "0110", '6' },
-			{ "0111", '7' },
-			{ "1000", '8' },
-			{ "1001", '9' },
-			{ "1010", 'A' },
-			{ "1011", 'B' },
-			{ "1100", 'C' },
-			{ "1101", 'D' },
-			{ "1110", 'E' },
-			{ "1111", 'F' },
-		};
-
-		string tem = sha.encode();
-		string result;
-
-		result.reserve(SHA256::sha256InBytesSize);
-
-		for (size_t i = 0; i < tem.size(); i += 4)
-		{
-			result += alphabet.at(string_view(tem.data() + i, 4));
-		}
-
-		return stream << result;
+		return stream << sha.encode();
 	}
 }
 
 template<typename T>
 string toBinary(const T& value)
 {
-	return (stringstream() << bitset<sizeof(T) * sizeof(uint64_t)>(value)).str();
+	return (stringstream() << bitset<sizeof(T) * CHAR_BIT>(value)).str();
 }
 
 string rightRotate(const string& binaryString, uint32_t count)
@@ -199,7 +263,7 @@ string rightRotate(const string& binaryString, uint32_t count)
 
 uint32_t rightRotate(uint32_t value, uint32_t count)
 {
-	const unsigned int mask = (sizeof(uint64_t) * sizeof(value) - 1);
+	const unsigned int mask = (CHAR_BIT * sizeof(value) - 1);
 
 	count &= mask;
 	return (value >> count) | (value << ((-count) & mask));

@@ -12,6 +12,16 @@ namespace encoding
 		static constexpr uint32_t  sha256InBitsSize = 256;
 		static constexpr uint32_t sha256InBytesSize = 64;
 
+	public:
+		enum class outputType
+		{
+			binary,
+			hexadecimal
+		};
+
+	private:
+		static std::string hexConversion(const std::string& binaryString);
+
 	private:
 		static constexpr uint32_t h0 = 0x6a09e667;
 		static constexpr uint32_t h1 = 0xbb67ae85;
@@ -36,16 +46,51 @@ namespace encoding
 
 	private:
 		std::string data;
+		outputType type;
 
 	public:
-		SHA256() = default;
+		SHA256(outputType type = outputType::hexadecimal);
 
-		SHA256(const std::string& data);
+		SHA256(const SHA256& other);
 
+		SHA256(SHA256&& other) noexcept;
+
+		SHA256(const std::string& data, outputType type = outputType::hexadecimal);
+
+		SHA256& operator = (const SHA256& other);
+
+		SHA256& operator = (SHA256&& other) noexcept;
+
+		/// <summary>
+		/// Encode data with SHA256 algorithm
+		/// </summary>
+		/// <returns>SHA256 encoded string</returns>
 		std::string encode() const;
 
+		/// <summary>
+		/// Getter for data
+		/// </summary>
+		/// <returns>const reference to data</returns>
 		const std::string& operator * () const;
 
+		/// <summary>
+		/// Setter for type
+		/// </summary>
+		/// <param name="type">new type</param>
+		void setOutputType(outputType type);
+
+		/// <summary>
+		/// Getter for type
+		/// </summary>
+		/// <returns>current type</returns>
+		outputType getOutputType() const;
+
+		/// <summary>
+		/// Set to output stream SHA256 encoded data
+		/// </summary>
+		/// <param name="stream">std::ostream subclass</param>
+		/// <param name="sha">instance to SHA256</param>
+		/// <returns>stream</returns>
 		friend std::ostream& operator << (std::ostream& stream, const SHA256& sha);
 
 		~SHA256() = default;
