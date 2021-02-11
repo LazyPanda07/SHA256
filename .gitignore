@@ -37,5 +37,8 @@
 # Binaries
 bin/
 
+# Build
+build/
+
 # .sln file
 SHA256.sln
