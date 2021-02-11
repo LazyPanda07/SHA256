@@ -6,9 +6,9 @@
 #define SHA256_API
 #endif // SHA256_DLL
 
-#include <string>
 #include <array>
 #include <vector>
+#include <string>
 #include <sstream>
 
 namespace encoding
@@ -30,9 +30,7 @@ namespace encoding
 	private:
 		static std::string hexConversion(const std::string& binaryString);
 
-		static void mainLoop(std::string_view nextBlock, std::vector<uint32_t>& currentValues); 
-
-		static void mainLoopOptimized(std::string_view nextBlock, std::vector<uint32_t>& currentValues);
+		static void mainLoop(std::string_view nextBlock, std::vector<uint32_t>& currentValues);
 
 	private:
 		static constexpr uint32_t h0 = 0x6a09e667;
@@ -78,8 +76,6 @@ namespace encoding
 		/// </summary>
 		/// <returns>SHA256 encoded string</returns>
 		std::string encode() const;
-
-		std::string optimizedEncode() const;
 
 		/// <summary>
 		/// Setter for type
