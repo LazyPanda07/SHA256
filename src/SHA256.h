@@ -127,4 +127,40 @@ namespace encoding
 
 		~SHA256() = default;
 	};
+
+	/// <summary>
+	/// <para>_sha256 literals</para>
+	/// <para>Shortcut access to SHA256 hash</para>
+	/// </summary>
+	inline namespace literals
+	{
+		/// <summary>
+		/// SHA256 hash for C type string
+		/// </summary>
+		/// <param name="data">C type string</param>
+		/// <param name="size">size in bytes of data</param>
+		/// <returns>SHA256 hash</returns>
+		SHA256_API std::string operator ""_sha256(const char* data, size_t size);
+
+		/// <summary>
+		/// SHA256 hash for unsigned integers
+		/// </summary>
+		/// <param name="data">unsigned integer</param>
+		/// <returns>SHA256 hash</returns>
+		SHA256_API std::string operator ""_sha256(unsigned long long int data);
+
+		/// <summary>
+		/// SHA256 hash for doubles
+		/// </summary>
+		/// <param name="data">double</param>
+		/// <returns>SHA256 hash</returns>
+		SHA256_API std::string operator ""_sha256(long double data);
+
+		/// <summary>
+		/// SHA256 hash for single chars
+		/// </summary>
+		/// <param name="data">single char</param>
+		/// <returns>SHA256 hash</returns>
+		SHA256_API std::string operator ""_sha256(char data);
+	}
 }

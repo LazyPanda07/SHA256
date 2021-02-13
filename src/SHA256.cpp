@@ -359,6 +359,29 @@ namespace encoding
 	{
 		return stream << sha.getHash();
 	}
+
+	namespace literals
+	{
+		string operator ""_sha256(const char* data, size_t size)
+		{
+			return SHA256::getHash(string(data, size));
+		}
+
+		string operator ""_sha256(unsigned long long int data)
+		{
+			return SHA256::getHash(to_string(data));
+		}
+
+		string operator ""_sha256(long double data)
+		{
+			return SHA256::getHash(to_string(data));
+		}
+
+		string operator ""_sha256(char data)
+		{
+			return SHA256::getHash(string() += data);
+		}
+	}
 }
 
 template<typename T>
