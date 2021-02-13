@@ -57,6 +57,15 @@ namespace encoding
 	private:
 		std::string data;
 		outputType type;
+		std::vector<uint32_t> currentValues;
+		uint64_t currentSize;
+
+	public:
+		/// <summary>
+		/// Encode data with SHA256 algorithm
+		/// </summary>
+		/// <returns>SHA256 encoded string</returns>
+		static std::string getHash(const std::string& data, outputType type = outputType::hexadecimal);
 
 	public:
 		SHA256(outputType type = outputType::hexadecimal);
@@ -72,10 +81,16 @@ namespace encoding
 		SHA256& operator = (SHA256&& other) noexcept;
 
 		/// <summary>
-		/// Encode data with SHA256 algorithm
+		/// Update current hash with data
 		/// </summary>
-		/// <returns>SHA256 encoded string</returns>
-		std::string encode() const;
+		/// <param name="data">is for updating current hash</param>
+		void update(const std::string& data);
+
+		/// <summary>
+		/// Get current calculated hash
+		/// </summary>
+		/// <returns>SHA256 hash</returns>
+		std::string getHash();
 
 		/// <summary>
 		/// Setter for type
@@ -90,22 +105,10 @@ namespace encoding
 		outputType getOutputType() const;
 
 		/// <summary>
-		/// Setter for data
+		/// Set all members to default state
 		/// </summary>
-		/// <param name="data">string to encode</param>
-		void setData(const std::string& data);
-
-		/// <summary>
-		/// Setter for data
-		/// </summary>
-		/// <param name="data">string to encode</param>
-		void setData(std::string&& data) noexcept;
-
-		/// <summary>
-		/// Getter for data
-		/// </summary>
-		/// <returns>const reference to data</returns>
-		const std::string& getData() const;
+		/// <param name="type">outputType enum class value</param>
+		void clear(outputType type = outputType::hexadecimal);
 
 		/// <summary>
 		/// Getter for data
@@ -114,13 +117,50 @@ namespace encoding
 		const std::string& operator * () const;
 
 		/// <summary>
-		/// Set to output stream SHA256 encoded data
+		/// <para>Set to output stream SHA256 encoded data</para>
+		/// <para>Modify current instance</para>
 		/// </summary>
 		/// <param name="stream">std::ostream subclass</param>
 		/// <param name="sha">instance of SHA256</param>
 		/// <returns>stream</returns>
-		friend SHA256_API std::ostream& operator << (std::ostream& stream, const SHA256& sha);
+		friend SHA256_API std::ostream& operator << (std::ostream& stream, SHA256& sha);
 
 		~SHA256() = default;
 	};
+
+	/// <summary>
+	/// <para>_sha256 literals</para>
+	/// <para>Shortcut access to SHA256 hash</para>
+	/// </summary>
+	inline namespace literals
+	{
+		/// <summary>
+		/// SHA256 hash for C type string
+		/// </summary>
+		/// <param name="data">C type string</param>
+		/// <param name="size">size in bytes of data</param>
+		/// <returns>SHA256 hash</returns>
+		SHA256_API std::string operator ""_sha256(const char* data, size_t size);
+
+		/// <summary>
+		/// SHA256 hash for unsigned integers
+		/// </summary>
+		/// <param name="data">unsigned integer</param>
+		/// <returns>SHA256 hash</returns>
+		SHA256_API std::string operator ""_sha256(unsigned long long int data);
+
+		/// <summary>
+		/// SHA256 hash for doubles
+		/// </summary>
+		/// <param name="data">double</param>
+		/// <returns>SHA256 hash</returns>
+		SHA256_API std::string operator ""_sha256(long double data);
+
+		/// <summary>
+		/// SHA256 hash for single chars
+		/// </summary>
+		/// <param name="data">single char</param>
+		/// <returns>SHA256 hash</returns>
+		SHA256_API std::string operator ""_sha256(char data);
+	}
 }
