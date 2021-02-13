@@ -4,6 +4,8 @@
 #include <bitset>
 #include <algorithm>
 
+#include <iostream>
+
 constexpr uint8_t bitsInByte = 8;
 
 #pragma warning(disable: 4146) // unary - on unsigned rightRotate
@@ -80,8 +82,6 @@ namespace encoding
 			w[j] = value;
 		}
 
-		for_each(w.begin() + 16, w.end(), [](uint32_t& value) { value = 0; });
-
 		for (size_t i = 16; i < w.size(); i++)
 		{
 			uint32_t s0 = rightRotate(w[i - 15], 7) ^ rightRotate(w[i - 15], 18) ^ rightShift(w[i - 15], 3);
@@ -128,53 +128,9 @@ namespace encoding
 		currentValues[7] += h;
 	}
 
-	SHA256::SHA256(outputType type) :
-		type(type)
-	{
-
-	}
-
-	SHA256::SHA256(const string& data, outputType type) :
-		data(data),
-		type(type)
-	{
-
-	}
-
-	SHA256::SHA256(const SHA256& other) :
-		data(other.data),
-		type(other.type)
-	{
-
-	}
-
-	SHA256::SHA256(SHA256&& other) noexcept :
-		data(move(other.data)),
-		type(other.type)
-	{
-
-	}
-
-	SHA256& SHA256::operator = (const SHA256& other)
-	{
-		data = other.data;
-		type = other.type;
-
-		return *this;
-	}
-
-	SHA256& SHA256::operator = (SHA256&& other) noexcept
-	{
-		data = move(other.data);
-		type = other.type;
-
-		return *this;
-	}
-
-	string SHA256::encode() const
+	string SHA256::getHash(const string& data, outputType type)
 	{
 		string binaryData = data;
-		array<uint32_t, sha256StringSize> w = {};
 		string result;
 
 		result.reserve(sha256StringSize);
@@ -186,7 +142,7 @@ namespace encoding
 			appendBit(binaryData, appendType::zero);
 		}
 
-		binaryData += [this]() -> string
+		binaryData += [&data]() -> string
 		{
 			string tem;
 			uint64_t size = 0;
@@ -212,14 +168,14 @@ namespace encoding
 
 		vector<uint32_t> values =
 		{
-			h0,
-			h1,
-			h2,
-			h3,
-			h4,
-			h5,
-			h6,
-			h7
+			SHA256::h0,
+			SHA256::h1,
+			SHA256::h2,
+			SHA256::h3,
+			SHA256::h4,
+			SHA256::h5,
+			SHA256::h6,
+			SHA256::h7
 		};
 
 		for (size_t i = 0; i < binaryData.size(); i += sha256StringSize)
@@ -250,6 +206,132 @@ namespace encoding
 		}
 	}
 
+	SHA256::SHA256(outputType type)
+	{
+		data.reserve(sha256StringSize);
+
+		this->clear(type);
+	}
+
+	SHA256::SHA256(const string& data, outputType type)
+	{
+		this->data.reserve(sha256StringSize);
+
+		this->clear(type);
+
+		this->update(data);
+	}
+
+	SHA256::SHA256(const SHA256& other) :
+		data(other.data),
+		type(other.type),
+		currentSize(other.currentSize),
+		currentValues(other.currentValues)
+	{
+
+	}
+
+	SHA256::SHA256(SHA256&& other) noexcept :
+		data(move(other.data)),
+		type(other.type),
+		currentSize(other.currentSize),
+		currentValues(move(other.currentValues))
+	{
+
+	}
+
+	SHA256& SHA256::operator = (const SHA256& other)
+	{
+		data = other.data;
+		type = other.type;
+		currentSize = other.currentSize;
+		currentValues = other.currentValues;
+
+		return *this;
+	}
+
+	SHA256& SHA256::operator = (SHA256&& other) noexcept
+	{
+		data = move(other.data);
+		type = other.type;
+		currentSize = other.currentSize;
+		currentValues = move(other.currentValues);
+
+		return *this;
+	}
+
+	void SHA256::update(const string& data)
+	{
+		for (const auto& i : data)
+		{
+			this->data += i;
+			currentSize++;
+
+			if (this->data.size() == sha256StringSize)
+			{
+				mainLoop(string_view(this->data.data(), sha256StringSize), currentValues);
+
+				this->data.clear();
+			}
+		}
+	}
+
+	string SHA256::getHash()
+	{
+		string binaryData = data;
+		string result;
+
+		result.reserve(sha256StringSize);
+
+		appendBit(binaryData, appendType::one);
+
+		while (binaryData.size() % sha256StringSize != sha256StringSize - sizeof(uint64_t))
+		{
+			appendBit(binaryData, appendType::zero);
+		}
+
+		binaryData += [this]() -> string
+		{
+			string tem;
+			uint64_t size = 0;
+			char* ptr = reinterpret_cast<char*>(&size) + sizeof(size) - 1;	// big-endian
+
+			size = currentSize * 8;
+			tem.clear();
+
+			for (size_t i = 0; i < sizeof(size); i++)
+			{
+				tem += *ptr--;
+			}
+
+			return tem;
+		}();
+
+		mainLoop(string_view(binaryData.data(), sha256StringSize), currentValues);
+
+		result =
+			toBinary(currentValues[0] % additionModulo) +
+			toBinary(currentValues[1] % additionModulo) +
+			toBinary(currentValues[2] % additionModulo) +
+			toBinary(currentValues[3] % additionModulo) +
+			toBinary(currentValues[4] % additionModulo) +
+			toBinary(currentValues[5] % additionModulo) +
+			toBinary(currentValues[6] % additionModulo) +
+			toBinary(currentValues[7] % additionModulo);
+
+		switch (type)
+		{
+		case encoding::SHA256::outputType::binary:
+			return result;
+
+		case encoding::SHA256::outputType::hexadecimal:
+			return hexConversion(result);
+
+		default:
+			throw runtime_error("Unknown error");
+		}
+	}
+
 	void SHA256::setOutputType(outputType type)
 	{
 		this->type = type;
@@ -260,19 +342,12 @@ namespace encoding
 		return type;
 	}
 
-	void SHA256::setData(const string& data)
+	void SHA256::clear(outputType type)
 	{
-		this->data = data;
-	}
-
-	void SHA256::setData(string&& data) noexcept
-	{
-		this->data = move(data);
-	}
-
-	const string& SHA256::getData() const
-	{
-		return data;
+		currentSize = 0;
+		currentValues = { h0, h1, h2, h3, h4, h5, h6, h7 };
+		this->type = type;
+		data.clear();
 	}
 
 	const string& SHA256::operator * () const
@@ -280,9 +355,9 @@ namespace encoding
 		return data;
 	}
 
-	ostream& operator << (ostream& stream, const SHA256& sha)
+	ostream& operator << (ostream& stream, SHA256& sha)
 	{
-		return stream << sha.encode();
+		return stream << sha.getHash();
 	}
 }
 
