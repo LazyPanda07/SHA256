@@ -52,7 +52,6 @@ namespace encoding
 			0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
 			0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 		};
-		static constexpr uint32_t additionModulo = std::numeric_limits<uint32_t>::max();
 
 	private:
 		std::string data;
@@ -87,6 +86,12 @@ namespace encoding
 		void update(const std::string& data);
 
 		/// <summary>
+		/// Update current hash with data
+		/// </summary>
+		/// <param name="data">is for updating current hash</param>
+		void update(std::string_view data);
+
+		/// <summary>
 		/// Get current calculated hash
 		/// </summary>
 		/// <returns>SHA256 hash</returns>
@@ -109,12 +114,6 @@ namespace encoding
 		/// </summary>
 		/// <param name="type">outputType enum class value</param>
 		void clear(outputType type = outputType::hexadecimal);
-
-		/// <summary>
-		/// Getter for data
-		/// </summary>
-		/// <returns>const reference to data</returns>
-		const std::string& operator * () const;
 
 		/// <summary>
 		/// <para>Set to output stream SHA256 encoded data</para>
