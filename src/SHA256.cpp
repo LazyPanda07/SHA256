@@ -4,8 +4,6 @@
 #include <bitset>
 #include <algorithm>
 
-#include <iostream>
-
 constexpr uint8_t bitsInByte = 8;
 
 #pragma warning(disable: 4146) // unary - on unsigned rightRotate
@@ -87,7 +85,7 @@ namespace encoding
 			uint32_t s0 = rightRotate(w[i - 15], 7) ^ rightRotate(w[i - 15], 18) ^ rightShift(w[i - 15], 3);
 			uint32_t s1 = rightRotate(w[i - 2], 17) ^ rightRotate(w[i - 2], 19) ^ rightShift(w[i - 2], 10);
 
-			w[i] = (w[i - 16] + s0 + w[i - 7] + s1) % additionModulo;
+			w[i] = (w[i - 16] + s0 + w[i - 7] + s1);
 		}
 
 		uint32_t a = currentValues[0];
@@ -103,19 +101,19 @@ namespace encoding
 		{
 			uint32_t s1 = rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25);
 			uint32_t ch = (e & f) ^ (~e & g);
-			uint32_t temp1 = (h + s1 + ch + k[i] + w[i]) % additionModulo;
+			uint32_t temp1 = h + s1 + ch + k[i] + w[i];
 			uint32_t s0 = rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22);
 			uint32_t maj = (a & b) ^ (a & c) ^ (b & c);
-			uint32_t temp2 = (s0 + maj) % additionModulo;
+			uint32_t temp2 = s0 + maj;
 
 			h = g;
 			g = f;
 			f = e;
-			e = (d + temp1) % additionModulo;
+			e = d + temp1;
 			d = c;
 			c = b;
 			b = a;
-			a = (temp1 + temp2) % additionModulo;
+			a = temp1 + temp2;
 		}
 
 		currentValues[0] += a;
@@ -133,7 +131,7 @@ namespace encoding
 		string binaryData = data;
 		string result;
 
-		result.reserve(sha256StringSize);
+		result.reserve(sha256InBitsSize);
 
 		appendBit(binaryData, appendType::one);
 
@@ -184,14 +182,14 @@ namespace encoding
 		}
 
 		result =
-			toBinary(values[0] % additionModulo) +
-			toBinary(values[1] % additionModulo) +
-			toBinary(values[2] % additionModulo) +
-			toBinary(values[3] % additionModulo) +
-			toBinary(values[4] % additionModulo) +
-			toBinary(values[5] % additionModulo) +
-			toBinary(values[6] % additionModulo) +
-			toBinary(values[7] % additionModulo);
+			toBinary(values[0]) +
+			toBinary(values[1]) +
+			toBinary(values[2]) +
+			toBinary(values[3]) +
+			toBinary(values[4]) +
+			toBinary(values[5]) +
+			toBinary(values[6]) +
+			toBinary(values[7]);
 
 		switch (type)
 		{
@@ -276,48 +274,88 @@ namespace encoding
 		}
 	}
 
+	void SHA256::update(string_view data)
+	{
+		for (const auto& i : data)
+		{
+			this->data += i;
+			currentSize++;
+
+			if (this->data.size() == sha256StringSize)
+			{
+				mainLoop(string_view(this->data.data(), sha256StringSize), currentValues);
+
+				this->data.clear();
+			}
+		}
+	}
+
 	string SHA256::getHash()
 	{
 		string binaryData = data;
 		string result;
 
-		result.reserve(sha256StringSize);
+		result.reserve(sha256InBitsSize);
 
-		appendBit(binaryData, appendType::one);
-
-		while (binaryData.size() % sha256StringSize != sha256StringSize - sizeof(uint64_t))
+		if (binaryData.size() >= sha256StringSize - sizeof(uint64_t))
 		{
-			appendBit(binaryData, appendType::zero);
-		}
+			uint64_t size = currentSize * 8;
+			char* ptr = reinterpret_cast<char*>(&size) + sizeof(size) - 1; // big-endian
 
-		binaryData += [this]() -> string
-		{
-			string tem;
-			uint64_t size = 0;
-			char* ptr = reinterpret_cast<char*>(&size) + sizeof(size) - 1;	// big-endian
+			appendBit(binaryData, appendType::one);
 
-			size = currentSize * 8;
-			tem.clear();
-
-			for (size_t i = 0; i < sizeof(size); i++)
+			while (binaryData.size() != sha256StringSize)
 			{
-				tem += *ptr--;
+				appendBit(binaryData, appendType::zero);
 			}
 
-			return tem;
-		}();
+			mainLoop(string_view(binaryData.data(), sha256StringSize), currentValues);
+
+			memset(binaryData.data(), NULL, sha256StringSize - sizeof(size));
+
+			for (size_t i = sha256StringSize - sizeof(size); i < binaryData.size(); i++)
+			{
+				binaryData[i] = *ptr--;
+			}
+		}
+		else
+		{
+			appendBit(binaryData, appendType::one);
+
+			while (binaryData.size() != sha256StringSize - sizeof(uint64_t))
+			{
+				appendBit(binaryData, appendType::zero);
+			}
+
+			binaryData += [this]() -> string
+			{
+				string tem;
+				uint64_t size = 0;
+				char* ptr = reinterpret_cast<char*>(&size) + sizeof(size) - 1; // big-endian
+
+				size = currentSize * 8;
+				tem.clear();
+
+				for (size_t i = 0; i < sizeof(size); i++)
+				{
+					tem += *ptr--;
+				}
+
+				return tem;
+			}();
+		}
 
 		mainLoop(string_view(binaryData.data(), sha256StringSize), currentValues);
 
 		result =
-			toBinary(currentValues[0] % additionModulo) +
-			toBinary(currentValues[1] % additionModulo) +
-			toBinary(currentValues[2] % additionModulo) +
-			toBinary(currentValues[3] % additionModulo) +
-			toBinary(currentValues[4] % additionModulo) +
-			toBinary(currentValues[5] % additionModulo) +
-			toBinary(currentValues[6] % additionModulo) +
-			toBinary(currentValues[7] % additionModulo);
+			toBinary(currentValues[0]) +
+			toBinary(currentValues[1]) +
+			toBinary(currentValues[2]) +
+			toBinary(currentValues[3]) +
+			toBinary(currentValues[4]) +
+			toBinary(currentValues[5]) +
+			toBinary(currentValues[6]) +
+			toBinary(currentValues[7]);
 
 		switch (type)
 		{
@@ -328,7 +366,7 @@ namespace encoding
 			return hexConversion(result);
 
 		default:
-			throw runtime_error("Unknown error");
+			throw runtime_error("Unknown outputType value");
 		}
 	}
 
@@ -342,17 +380,12 @@ namespace encoding
 		return type;
 	}
 
-	void SHA256::clear(outputType type)
+	void SHA256::clear(outputType type) noexcept
 	{
 		currentSize = 0;
 		currentValues = { h0, h1, h2, h3, h4, h5, h6, h7 };
 		this->type = type;
 		data.clear();
-	}
-
-	const string& SHA256::operator * () const
-	{
-		return data;
 	}
 
 	ostream& operator << (ostream& stream, SHA256& sha)
@@ -434,7 +467,7 @@ void appendBit(string& binaryData, appendType type)
 	switch (type)
 	{
 	case appendType::zero:
-		binaryData += static_cast<char>(0);
+		binaryData += static_cast<char>(NULL);
 		break;
 
 	case appendType::one:
