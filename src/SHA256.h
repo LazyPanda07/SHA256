@@ -95,6 +95,7 @@ namespace encoding
 		/// Get current calculated hash
 		/// </summary>
 		/// <returns>SHA256 hash</returns>
+		/// <exception cref="std::runtime_error">wrong outputType value</exception>
 		std::string getHash();
 
 		/// <summary>
@@ -113,7 +114,7 @@ namespace encoding
 		/// Set all members to default state
 		/// </summary>
 		/// <param name="type">outputType enum class value</param>
-		void clear(outputType type = outputType::hexadecimal);
+		void clear(outputType type = outputType::hexadecimal) noexcept;
 
 		/// <summary>
 		/// <para>Set to output stream SHA256 encoded data</para>
@@ -122,6 +123,7 @@ namespace encoding
 		/// <param name="stream">std::ostream subclass</param>
 		/// <param name="sha">instance of SHA256</param>
 		/// <returns>stream</returns>
+		/// <exception cref="std::runtime_error">wrong outputType value</exception>
 		friend SHA256_API std::ostream& operator << (std::ostream& stream, SHA256& sha);
 
 		~SHA256() = default;

@@ -4,8 +4,6 @@
 #include <bitset>
 #include <algorithm>
 
-#include <iostream>
-
 constexpr uint8_t bitsInByte = 8;
 
 #pragma warning(disable: 4146) // unary - on unsigned rightRotate
@@ -299,7 +297,7 @@ namespace encoding
 
 		result.reserve(sha256InBitsSize);
 
-		if (binaryData.size() >= 56)
+		if (binaryData.size() >= sha256StringSize - sizeof(uint64_t))
 		{
 			uint64_t size = currentSize * 8;
 			char* ptr = reinterpret_cast<char*>(&size) + sizeof(size) - 1; // big-endian
@@ -368,7 +366,7 @@ namespace encoding
 			return hexConversion(result);
 
 		default:
-			throw runtime_error("Unknown error");
+			throw runtime_error("Unknown outputType value");
 		}
 	}
 
@@ -382,7 +380,7 @@ namespace encoding
 		return type;
 	}
 
-	void SHA256::clear(outputType type)
+	void SHA256::clear(outputType type) noexcept
 	{
 		currentSize = 0;
 		currentValues = { h0, h1, h2, h3, h4, h5, h6, h7 };
