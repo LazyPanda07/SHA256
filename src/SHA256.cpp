@@ -87,7 +87,7 @@ namespace encoding
 			uint32_t s0 = rightRotate(w[i - 15], 7) ^ rightRotate(w[i - 15], 18) ^ rightShift(w[i - 15], 3);
 			uint32_t s1 = rightRotate(w[i - 2], 17) ^ rightRotate(w[i - 2], 19) ^ rightShift(w[i - 2], 10);
 
-			w[i] = (w[i - 16] + s0 + w[i - 7] + s1) ;
+			w[i] = (w[i - 16] + s0 + w[i - 7] + s1);
 		}
 
 		uint32_t a = currentValues[0];
@@ -299,29 +299,53 @@ namespace encoding
 
 		result.reserve(sha256InBitsSize);
 
-		appendBit(binaryData, appendType::one);
-
-		while (binaryData.size() % sha256StringSize != sha256StringSize - sizeof(uint64_t))
+		if (binaryData.size() >= 56)
 		{
-			appendBit(binaryData, appendType::zero);
-		}
+			uint64_t size = currentSize * 8;
+			char* ptr = reinterpret_cast<char*>(&size) + sizeof(size) - 1; // big-endian
 
-		binaryData += [this]() -> string
-		{
-			string tem;
-			uint64_t size = 0;
-			char* ptr = reinterpret_cast<char*>(&size) + sizeof(size) - 1;	// big-endian
+			appendBit(binaryData, appendType::one);
 
-			size = currentSize * 8;
-			tem.clear();
-
-			for (size_t i = 0; i < sizeof(size); i++)
+			while (binaryData.size() != sha256StringSize)
 			{
-				tem += *ptr--;
+				appendBit(binaryData, appendType::zero);
 			}
 
-			return tem;
-		}();
+			mainLoop(string_view(binaryData.data(), sha256StringSize), currentValues);
+
+			memset(binaryData.data(), NULL, sha256StringSize - sizeof(size));
+
+			for (size_t i = sha256StringSize - sizeof(size); i < binaryData.size(); i++)
+			{
+				binaryData[i] = *ptr--;
+			}
+		}
+		else
+		{
+			appendBit(binaryData, appendType::one);
+
+			while (binaryData.size() != sha256StringSize - sizeof(uint64_t))
+			{
+				appendBit(binaryData, appendType::zero);
+			}
+
+			binaryData += [this]() -> string
+			{
+				string tem;
+				uint64_t size = 0;
+				char* ptr = reinterpret_cast<char*>(&size) + sizeof(size) - 1; // big-endian
+
+				size = currentSize * 8;
+				tem.clear();
+
+				for (size_t i = 0; i < sizeof(size); i++)
+				{
+					tem += *ptr--;
+				}
+
+				return tem;
+			}();
+		}
 
 		mainLoop(string_view(binaryData.data(), sha256StringSize), currentValues);
 
@@ -445,7 +469,7 @@ void appendBit(string& binaryData, appendType type)
 	switch (type)
 	{
 	case appendType::zero:
-		binaryData += static_cast<char>(0);
+		binaryData += static_cast<char>(NULL);
 		break;
 
 	case appendType::one:
