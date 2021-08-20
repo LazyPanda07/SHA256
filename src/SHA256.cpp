@@ -425,7 +425,7 @@ string toBinary(const T& value)
 
 string rightRotate(const string& binaryString, uint32_t count)
 {
-	count = binaryString.size() - count;
+	count = static_cast<uint32_t>(binaryString.size()) - count;
 	string tem = binaryString;
 
 	reverse(tem.begin(), tem.begin() + count);
@@ -447,12 +447,15 @@ string rightShift(const string& binaryString, uint32_t count)
 {
 	string tem = binaryString;
 
-	for (uint32_t i = tem.size() - 1; i >= count; i--)
+	if (tem.size())
 	{
-		tem[i] = tem[i - count];
-	}
+		for (uint32_t i = static_cast<uint32_t>(tem.size()) - 1; i >= count; i--)
+		{
+			tem[i] = tem[i - count];
+		}
 
-	replace_if(tem.begin(), tem.begin() + count, [](const auto& value) { return true; }, '0');
+		replace_if(tem.begin(), tem.begin() + count, [](const auto& value) { return true; }, '0');
+	}
 
 	return tem;
 }
