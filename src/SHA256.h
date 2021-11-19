@@ -15,17 +15,26 @@
 
 namespace encoding
 {
-	class SHA256_API SHA256
+	/// @brief Provides encoding with SHA256 algorithm
+	class SHA256_API SHA256 final
 	{
 	public:
+		/// @brief Output string size in bits
 		static constexpr uint32_t sha256InBitsSize = 256;
+
+		/// @brief Output string size in bytes
 		static constexpr uint32_t sha256InBytesSize = 32;
+
+		/// @brief Output string size
 		static constexpr uint32_t sha256StringSize = 64;
 
 	public:
+		/// @brief Provides output in two forms
 		enum class outputType
 		{
+			/// @brief Binary output form
 			binary,
+			/// @brief Hexadecimal output form
 			hexadecimal
 		};
 
@@ -70,16 +79,31 @@ namespace encoding
 		static std::string getHash(const std::string& data, outputType type = outputType::hexadecimal);
 
 	public:
+		/// @brief Default constructor
+		/// @param type Output type
 		SHA256(outputType type = outputType::hexadecimal);
 
+		/// @brief Construct with all data
+		/// @param data Data to encode
+		/// @param type Output type
 		SHA256(const std::string& data, outputType type = outputType::hexadecimal);
 
+		/// @brief Copy constructor
+		/// @param other Other SHA256 instance
 		SHA256(const SHA256& other);
 
+		/// @brief Move constructor
+		/// @param other Other SHA256 instance
 		SHA256(SHA256&& other) noexcept;
 
+		/// @brief Copy operator
+		/// @param other Other SHA256 instance
+		/// @return Reference to copied instance
 		SHA256& operator = (const SHA256& other);
 
+		/// @brief Move operator
+		/// @param other Other SHA256 instance
+		/// @return Reference to moved instance
 		SHA256& operator = (SHA256&& other) noexcept;
 
 		/// <summary>
