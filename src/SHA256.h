@@ -2,6 +2,8 @@
 
 #ifdef SHA256_DLL
 #define SHA256_API __declspec(dllexport)
+#pragma warning(push)
+#pragma warning(disable: 4251)
 #else
 #define SHA256_API
 #endif // SHA256_DLL
@@ -86,12 +88,6 @@ namespace encoding
 		void update(const std::string& data);
 
 		/// <summary>
-		/// Update current hash with data
-		/// </summary>
-		/// <param name="data">is for updating current hash</param>
-		void update(std::string_view data);
-
-		/// <summary>
 		/// Get current calculated hash
 		/// </summary>
 		/// <returns>SHA256 hash</returns>
@@ -165,3 +161,7 @@ namespace encoding
 		SHA256_API std::string operator ""_sha256(char data);
 	}
 }
+
+#ifdef SHA256_DLL
+#pragma warning(pop)
+#endif // SHA256_DLL

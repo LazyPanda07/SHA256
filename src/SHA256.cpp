@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <bitset>
 #include <algorithm>
+#include <numeric>
 
 constexpr uint8_t bitsInByte = 8;
 
@@ -274,22 +275,6 @@ namespace encoding
 		}
 	}
 
-	void SHA256::update(string_view data)
-	{
-		for (const auto& i : data)
-		{
-			this->data += i;
-			currentSize++;
-
-			if (this->data.size() == sha256StringSize)
-			{
-				mainLoop(string_view(this->data.data(), sha256StringSize), currentValues);
-
-				this->data.clear();
-			}
-		}
-	}
-
 	string SHA256::getHash()
 	{
 		string binaryData = data;
@@ -347,15 +332,7 @@ namespace encoding
 
 		mainLoop(string_view(binaryData.data(), sha256StringSize), currentValues);
 
-		result =
-			toBinary(currentValues[0]) +
-			toBinary(currentValues[1]) +
-			toBinary(currentValues[2]) +
-			toBinary(currentValues[3]) +
-			toBinary(currentValues[4]) +
-			toBinary(currentValues[5]) +
-			toBinary(currentValues[6]) +
-			toBinary(currentValues[7]);
+		result = accumulate(currentValues.begin(), currentValues.end(), ""s, [](const string& currentString, uint32_t nextValue) -> string { return currentString + toBinary(nextValue); });
 
 		currentValues = { h0, h1, h2, h3, h4, h5, h6, h7 };
 
@@ -390,29 +367,29 @@ namespace encoding
 		data.clear();
 	}
 
-	ostream& operator << (ostream& stream, SHA256& sha)
+	SHA256_API ostream& operator << (ostream& stream, SHA256& sha)
 	{
 		return stream << sha.getHash();
 	}
 
 	namespace literals
 	{
-		string operator ""_sha256(const char* data, size_t size)
+		SHA256_API string operator ""_sha256(const char* data, size_t size)
 		{
 			return SHA256::getHash(string(data, size));
 		}
 
-		string operator ""_sha256(unsigned long long int data)
+		SHA256_API string operator ""_sha256(unsigned long long int data)
 		{
 			return SHA256::getHash(to_string(data));
 		}
 
-		string operator ""_sha256(long double data)
+		SHA256_API string operator ""_sha256(long double data)
 		{
 			return SHA256::getHash(to_string(data));
 		}
 
-		string operator ""_sha256(char data)
+		SHA256_API string operator ""_sha256(char data)
 		{
 			return SHA256::getHash(string() += data);
 		}
