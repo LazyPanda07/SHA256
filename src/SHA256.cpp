@@ -6,6 +6,7 @@
 #include <numeric>
 
 constexpr uint8_t bitsInByte = 8;
+constexpr uint8_t hexAlphabetValuesSize = 4;
 
 #pragma warning(disable: 4146) // unary - on unsigned rightRotate
 #pragma warning(disable: 6260)
@@ -27,6 +28,8 @@ uint32_t rightRotate(uint32_t value, uint32_t count);
 uint32_t rightShift(uint32_t value, uint32_t count);
 
 void appendBit(string& binaryData, appendType type);
+
+string accumulateResultString(const string& currentString, uint32_t nextValue);
 
 namespace encoding
 {
@@ -51,13 +54,14 @@ namespace encoding
 			{ "1110", 'E' },
 			{ "1111", 'F' },
 		};
+
 		string result;
 
 		result.reserve(SHA256::sha256StringSize);
 
-		for (size_t i = 0; i < binaryString.size(); i += 4)
+		for (size_t i = 0; i < binaryString.size(); i += hexAlphabetValuesSize)
 		{
-			result += alphabet.at(string_view(binaryString.data() + i, 4));
+			result += alphabet.at(string_view(binaryString.data() + i, hexAlphabetValuesSize));
 		}
 
 		return result;
@@ -67,7 +71,7 @@ namespace encoding
 	{
 		array<uint32_t, sha256StringSize> w = {};
 
-		for (size_t i = 0, j = 0; i < nextBlock.size(); i += 4, j++)
+		for (size_t i = 0, j = 0; i < nextBlock.size(); i += hexAlphabetValuesSize, j++)
 		{
 			uint32_t value = 0;
 			char* ptr = reinterpret_cast<char*>(&value) + sizeof(value) - 1;
@@ -182,15 +186,7 @@ namespace encoding
 			mainLoop(string_view(binaryData.data() + i, sha256StringSize), values);
 		}
 
-		result =
-			toBinary(values[0]) +
-			toBinary(values[1]) +
-			toBinary(values[2]) +
-			toBinary(values[3]) +
-			toBinary(values[4]) +
-			toBinary(values[5]) +
-			toBinary(values[6]) +
-			toBinary(values[7]);
+		result = accumulate(values.begin(), values.end(), ""s, accumulateResultString);
 
 		switch (type)
 		{
@@ -332,16 +328,16 @@ namespace encoding
 
 		mainLoop(string_view(binaryData.data(), sha256StringSize), currentValues);
 
-		result = accumulate(currentValues.begin(), currentValues.end(), ""s, [](const string& currentString, uint32_t nextValue) -> string { return currentString + toBinary(nextValue); });
+		result = accumulate(currentValues.begin(), currentValues.end(), ""s, accumulateResultString);
 
 		currentValues = { h0, h1, h2, h3, h4, h5, h6, h7 };
 
 		switch (type)
 		{
-		case encoding::SHA256::outputType::binary:
+		case outputType::binary:
 			return result;
 
-		case encoding::SHA256::outputType::hexadecimal:
+		case outputType::hexadecimal:
 			return hexConversion(result);
 
 		default:
@@ -399,7 +395,7 @@ namespace encoding
 template<typename T>
 string toBinary(const T& value)
 {
-	return (stringstream() << bitset<sizeof(T)* bitsInByte>(value)).str();
+	return (ostringstream() << bitset<sizeof(T) * bitsInByte>(value)).str();
 }
 
 string rightRotate(const string& binaryString, uint32_t count)
@@ -416,27 +412,10 @@ string rightRotate(const string& binaryString, uint32_t count)
 
 uint32_t rightRotate(uint32_t value, uint32_t count)
 {
-	const unsigned int mask = (bitsInByte * sizeof(value) - 1);
+	uint32_t mask = (bitsInByte * sizeof(value) - 1);
 
 	count &= mask;
 	return (value >> count) | (value << ((-count) & mask));
-}
-
-string rightShift(const string& binaryString, uint32_t count)
-{
-	string tem = binaryString;
-
-	if (tem.size())
-	{
-		for (uint32_t i = static_cast<uint32_t>(tem.size()) - 1; i >= count; i--)
-		{
-			tem[i] = tem[i - count];
-		}
-
-		replace_if(tem.begin(), tem.begin() + count, [](const auto& value) { return true; }, '0');
-	}
-
-	return tem;
 }
 
 uint32_t rightShift(uint32_t value, uint32_t count)
@@ -450,10 +429,17 @@ void appendBit(string& binaryData, appendType type)
 	{
 	case appendType::zero:
 		binaryData += static_cast<char>(NULL);
+
 		break;
 
 	case appendType::one:
 		binaryData += static_cast<char>(128);
+
 		break;
 	}
+}
+
+string accumulateResultString(const string& currentString, uint32_t nextValue)
+{
+	return currentString + toBinary(nextValue);
 }

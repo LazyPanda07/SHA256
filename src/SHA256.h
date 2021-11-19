@@ -66,6 +66,7 @@ namespace encoding
 		/// Encode data with SHA256 algorithm
 		/// </summary>
 		/// <returns>SHA256 encoded string</returns>
+		/// <exception cref="std::runtime_error">wrong outputType value</exception>
 		static std::string getHash(const std::string& data, outputType type = outputType::hexadecimal);
 
 	public:
