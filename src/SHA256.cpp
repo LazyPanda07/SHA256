@@ -275,6 +275,7 @@ namespace encoding
 	{
 		string binaryData = data;
 		string result;
+		vector<uint32_t> savedValues = currentValues;
 
 		result.reserve(sha256InBitsSize);
 
@@ -330,7 +331,7 @@ namespace encoding
 
 		result = accumulate(currentValues.begin(), currentValues.end(), ""s, accumulateResultString);
 
-		currentValues = { h0, h1, h2, h3, h4, h5, h6, h7 };
+		currentValues = savedValues;
 
 		switch (type)
 		{
