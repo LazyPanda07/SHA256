@@ -150,7 +150,7 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
-        path: FileManager
+        path: SHA256
         name: ${{ matrix.configuration }}${{ matrix.shared[1] }}_Linux
 
     - name: Get Google Test
