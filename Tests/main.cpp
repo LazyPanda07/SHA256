@@ -6,7 +6,7 @@
 
 #include "SHA256.h"
 
-std::unordered_map<std::string, std::string> hashes =
+static const std::unordered_map<std::string, std::string> hashes =
 {
 	{ "qwe", "489CD5DBC708C7E541DE4D7CD91CE6D0F1613573B7FC5B40D3942CCB9555CF35" },
 	{ "some string here", "962AFC13263E6B264969A5F7D006A11029745EB4138D354FD8E81F0926CFE62A" },

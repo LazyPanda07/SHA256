@@ -4,6 +4,7 @@
 #include <bitset>
 #include <algorithm>
 #include <numeric>
+#include <cstring>
 
 constexpr uint8_t bitsInByte = 8;
 constexpr uint8_t hexAlphabetValuesSize = 4;
