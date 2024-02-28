@@ -1,17 +1,21 @@
 #pragma once
 
-#ifdef SHA256_DLL
-#define SHA256_API __declspec(dllexport)
-#pragma warning(push)
-#pragma warning(disable: 4251)
-#else
-#define SHA256_API
-#endif // SHA256_DLL
-
 #include <array>
 #include <vector>
 #include <string>
 #include <sstream>
+
+#ifdef SHA256_DLL
+#ifdef __LINUX__
+#define SHA256_API __attribute__((visibility("default")))
+#else
+#define SHA256_API __declspec(dllexport)
+#pragma warning(push)
+#pragma warning(disable: 4251)
+#endif
+#else
+#define SHA256_API
+#endif // SHA256_DLL
 
 namespace encoding
 {
@@ -42,6 +46,9 @@ namespace encoding
 		static std::string hexConversion(const std::string& binaryString);
 
 		static void mainLoop(std::string_view nextBlock, std::vector<uint32_t>& currentValues);
+
+	public:
+		static std::string getVersion();
 
 	private:
 		static constexpr uint32_t h0 = 0x6a09e667;
@@ -162,31 +169,45 @@ namespace encoding
 		/// <param name="data">C type string</param>
 		/// <param name="size">size in bytes of data</param>
 		/// <returns>SHA256 hash</returns>
-		SHA256_API std::string operator ""_sha256(const char* data, size_t size);
+		inline std::string operator ""_sha256(const char* data, size_t size)
+		{
+			return SHA256::getHash(std::string(data, size));
+		}
 
 		/// <summary>
 		/// SHA256 hash for unsigned integers
 		/// </summary>
 		/// <param name="data">unsigned integer</param>
 		/// <returns>SHA256 hash</returns>
-		SHA256_API std::string operator ""_sha256(unsigned long long int data);
+		inline std::string operator ""_sha256(unsigned long long int data)
+		{
+			return SHA256::getHash(std::to_string(data));
+		}
 
 		/// <summary>
 		/// SHA256 hash for doubles
 		/// </summary>
 		/// <param name="data">double</param>
 		/// <returns>SHA256 hash</returns>
-		SHA256_API std::string operator ""_sha256(long double data);
+		inline std::string operator ""_sha256(long double data)
+		{
+			return SHA256::getHash(std::to_string(data));
+		}
 
 		/// <summary>
 		/// SHA256 hash for single chars
 		/// </summary>
 		/// <param name="data">single char</param>
 		/// <returns>SHA256 hash</returns>
-		SHA256_API std::string operator ""_sha256(char data);
+		inline std::string operator ""_sha256(char data)
+		{
+			return SHA256::getHash(std::string() += data);
+		}
 	}
 }
 
 #ifdef SHA256_DLL
+#ifndef __LINUX__
 #pragma warning(pop)
+#endif
 #endif // SHA256_DLL

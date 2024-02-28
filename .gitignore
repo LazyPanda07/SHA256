@@ -31,14 +31,16 @@
 *.out
 *.app
 
+# Google Tests
+gtest/
+
 # VS folders
 .vs/
 
 # Binaries
 bin/
-
-# Build
 build/
+out/
 
 # .sln file
 SHA256.sln

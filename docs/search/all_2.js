@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['literals_2',['literals',['../namespaceencoding_1_1literals.html',1,'encoding']]]
+  ['encoding_3a_3aliterals_0',['literals',['../namespaceencoding_1_1literals.html',1,'encoding']]]
 ];

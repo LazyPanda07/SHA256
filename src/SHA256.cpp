@@ -131,6 +131,13 @@ namespace encoding
 		currentValues[7] += h;
 	}
 
+	string SHA256::getVersion()
+	{
+		string version = "1.5.0";
+
+		return version;
+	}
+
 	string SHA256::getHash(const string& data, outputType type)
 	{
 		string binaryData = data;
@@ -364,32 +371,9 @@ namespace encoding
 		data.clear();
 	}
 
-	SHA256_API ostream& operator << (ostream& stream, SHA256& sha)
+	ostream& operator << (ostream& stream, SHA256& sha)
 	{
 		return stream << sha.getHash();
-	}
-
-	namespace literals
-	{
-		SHA256_API string operator ""_sha256(const char* data, size_t size)
-		{
-			return SHA256::getHash(string(data, size));
-		}
-
-		SHA256_API string operator ""_sha256(unsigned long long int data)
-		{
-			return SHA256::getHash(to_string(data));
-		}
-
-		SHA256_API string operator ""_sha256(long double data)
-		{
-			return SHA256::getHash(to_string(data));
-		}
-
-		SHA256_API string operator ""_sha256(char data)
-		{
-			return SHA256::getHash(string() += data);
-		}
 	}
 }
 
