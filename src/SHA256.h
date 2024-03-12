@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <cstdint>
 
 #ifdef SHA256_DLL
 #ifdef __LINUX__

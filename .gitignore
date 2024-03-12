@@ -41,6 +41,3 @@ gtest/
 bin/
 build/
 out/
-
-# .sln file
-SHA256.sln
