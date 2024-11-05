@@ -134,7 +134,7 @@ namespace encoding
 
 	string SHA256::getVersion()
 	{
-		string version = "1.5.2";
+		string version = "1.5.3";
 
 		return version;
 	}
@@ -339,7 +339,7 @@ namespace encoding
 
 		result = accumulate(currentValues.begin(), currentValues.end(), ""s, accumulateResultString);
 
-		currentValues = savedValues;
+		currentValues = move(savedValues);
 
 		switch (type)
 		{
