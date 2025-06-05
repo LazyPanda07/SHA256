@@ -134,7 +134,7 @@ namespace encoding
 
 	string SHA256::getVersion()
 	{
-		string version = "1.5.3";
+		string version = "1.6.0";
 
 		return version;
 	}

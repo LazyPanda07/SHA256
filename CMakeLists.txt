@@ -12,12 +12,16 @@ if (${BUILD_SHARED_LIBS})
 	add_definitions(-DSHA256_DLL)
 endif ()
 
-project(SHA256 VERSION 1.5.3)
+project(SHA256 VERSION 1.6.0)
 
 add_library(
 	${PROJECT_NAME}
 	src/SHA256.cpp
 )
+
+if (DEFINED ENV{MARCH} AND NOT "$ENV{MARCH}" STREQUAL "")
+	target_compile_options(${PROJECT_NAME} PRIVATE -march=$ENV{MARCH})
+endif()
 
 install(
 	TARGETS ${PROJECT_NAME}
