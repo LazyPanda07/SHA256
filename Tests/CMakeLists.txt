@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.27.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(DLL ${CMAKE_SOURCE_DIR}/../SHA256)
+set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR})
+set(GTEST_VERSION 1.17.0)
 
 if (UNIX)
 	set(DLL ${DLL}/lib/libSHA256.so)
@@ -19,12 +21,15 @@ endif ()
 
 project(Tests)
 
-find_package(GTest)
+include(FetchContent)
 
-if(NOT ${GTest_FOUND})
-	set(GTEST_BOTH_LIBRARIES gtest gtest_main)
-	set(GTEST_INCLUDE_DIRS gtest/include/)
-endif()
+FetchContent_Declare(
+	gtest
+	GIT_REPOSITORY https://github.com/google/googletest.git
+	GIT_TAG v${GTEST_VERSION}
+)
+
+FetchContent_MakeAvailable(gtest)
 
 add_executable(
 	${PROJECT_NAME}
@@ -33,20 +38,19 @@ add_executable(
 
 target_include_directories(
 	${PROJECT_NAME} PUBLIC
-	${CMAKE_SOURCE_DIR}/../src
-	${GTEST_INCLUDE_DIRS}
+	${CMAKE_SOURCE_DIR}/../include
 )
 
 target_link_directories(
 	${PROJECT_NAME} PUBLIC
 	${CMAKE_SOURCE_DIR}/../SHA256/lib
-	gtest/lib
 )
 
 target_link_libraries(
 	${PROJECT_NAME} PUBLIC
 	SHA256
-	${GTEST_BOTH_LIBRARIES}
+	gtest
+	gtest_main
 )
 
-install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_BINARY_DIR}/bin)
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)

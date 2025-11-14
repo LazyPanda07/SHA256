@@ -20,7 +20,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\SHA256.h">
+    <ClInclude Include="include\SHA256.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
