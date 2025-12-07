@@ -35,7 +35,7 @@ namespace encoding
 
 	public:
 		/// @brief Provides output in two forms
-		enum class outputType
+		enum class OutputType
 		{
 			/// @brief Binary output form
 			binary,
@@ -74,7 +74,7 @@ namespace encoding
 
 	private:
 		std::string data;
-		outputType type;
+		OutputType type;
 		std::vector<uint32_t> currentValues;
 		uint64_t currentSize;
 
@@ -84,17 +84,17 @@ namespace encoding
 		/// </summary>
 		/// <returns>SHA256 encoded string</returns>
 		/// <exception cref="std::runtime_error">wrong outputType value</exception>
-		static std::string getHash(const std::string& data, outputType type = outputType::hexadecimal);
+		static std::string getHash(const std::string& data, OutputType type = OutputType::hexadecimal);
 
 	public:
 		/// @brief Default constructor
 		/// @param type Output type
-		SHA256(outputType type = outputType::hexadecimal);
+		SHA256(OutputType type = OutputType::hexadecimal);
 
 		/// @brief Construct with all data
 		/// @param data Data to encode
 		/// @param type Output type
-		SHA256(const std::string& data, outputType type = outputType::hexadecimal);
+		SHA256(const std::string& data, OutputType type = OutputType::hexadecimal);
 
 		/// @brief Copy constructor
 		/// @param other Other SHA256 instance
@@ -131,19 +131,19 @@ namespace encoding
 		/// Setter for type
 		/// </summary>
 		/// <param name="type">new type</param>
-		void setOutputType(outputType type);
+		void setOutputType(OutputType type);
 
 		/// <summary>
 		/// Getter for type
 		/// </summary>
 		/// <returns>current type</returns>
-		outputType getOutputType() const;
+		OutputType getOutputType() const;
 
 		/// <summary>
 		/// Set all members to default state
 		/// </summary>
 		/// <param name="type">outputType enum class value</param>
-		void clear(outputType type = outputType::hexadecimal) noexcept;
+		void clear(OutputType type = OutputType::hexadecimal) noexcept;
 
 		/// <summary>
 		/// <para>Set to output stream SHA256 encoded data</para>

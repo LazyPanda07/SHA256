@@ -13,30 +13,28 @@ constexpr uint8_t hexAlphabetValuesSize = 4;
 #pragma warning(disable: 6260)
 #pragma warning(disable: 6290) // unary ! on unsigned
 
-using namespace std;
-
-enum class appendType
+enum class AppendType
 {
 	zero,
 	one
 };
 
 template<typename T>
-string toBinary(const T& value);
+std::string toBinary(const T& value);
 
 uint32_t rightRotate(uint32_t value, uint32_t count);
 
 uint32_t rightShift(uint32_t value, uint32_t count);
 
-void appendBit(string& binaryData, appendType type);
+void appendBit(std::string& binaryData, AppendType type);
 
-string accumulateResultString(const string& currentString, uint32_t nextValue);
+std::string accumulateResultString(const std::string& currentString, uint32_t nextValue);
 
 namespace encoding
 {
-	string SHA256::hexConversion(const string& binaryString)
+	std::string SHA256::hexConversion(const std::string& binaryString)
 	{
-		static const unordered_map<string_view, char> alphabet =
+		static const std::unordered_map<std::string_view, char> alphabet =
 		{
 			{ "0000", '0' },
 			{ "0001", '1' },
@@ -56,21 +54,21 @@ namespace encoding
 			{ "1111", 'F' },
 		};
 
-		string result;
+		std::string result;
 
 		result.reserve(SHA256::sha256StringSize);
 
 		for (size_t i = 0; i < binaryString.size(); i += hexAlphabetValuesSize)
 		{
-			result += alphabet.at(string_view(binaryString.data() + i, hexAlphabetValuesSize));
+			result += alphabet.at(std::string_view(binaryString.data() + i, hexAlphabetValuesSize));
 		}
 
 		return result;
 	}
 
-	void SHA256::mainLoop(string_view nextBlock, vector<uint32_t>& currentValues)
+	void SHA256::mainLoop(std::string_view nextBlock, std::vector<uint32_t>& currentValues)
 	{
-		array<uint32_t, sha256StringSize> w = {};
+		std::array<uint32_t, sha256StringSize> w = {};
 
 		for (size_t i = 0, j = 0; i < nextBlock.size(); i += hexAlphabetValuesSize, j++)
 		{
@@ -132,30 +130,32 @@ namespace encoding
 		currentValues[7] += h;
 	}
 
-	string SHA256::getVersion()
+	std::string SHA256::getVersion()
 	{
-		string version = "1.7.0";
+		std::string version = "1.7.1";
 
 		return version;
 	}
 
-	string SHA256::getHash(const string& data, outputType type)
+	std::string SHA256::getHash(const std::string& data, OutputType type)
 	{
-		string binaryData = data;
-		string result;
+		using namespace std::string_literals;
+
+		std::string binaryData = data;
+		std::string result;
 
 		result.reserve(sha256InBitsSize);
 
-		appendBit(binaryData, appendType::one);
+		appendBit(binaryData, AppendType::one);
 
 		while (binaryData.size() % sha256StringSize != sha256StringSize - sizeof(uint64_t))
 		{
-			appendBit(binaryData, appendType::zero);
+			appendBit(binaryData, AppendType::zero);
 		}
 
-		binaryData += [&data]() -> string
+		binaryData += [&data]() -> std::string
 		{
-			string tem;
+			std::string tem;
 			uint64_t size = 0;
 			char* ptr = reinterpret_cast<char*>(&size) + sizeof(size) - 1;	// big-endian
 
@@ -177,7 +177,7 @@ namespace encoding
 			return tem;
 		}();
 
-		vector<uint32_t> values =
+		std::vector<uint32_t> values =
 		{
 			SHA256::h0,
 			SHA256::h1,
@@ -191,32 +191,32 @@ namespace encoding
 
 		for (size_t i = 0; i < binaryData.size(); i += sha256StringSize)
 		{
-			mainLoop(string_view(binaryData.data() + i, sha256StringSize), values);
+			mainLoop(std::string_view(binaryData.data() + i, sha256StringSize), values);
 		}
 
 		result = accumulate(values.begin(), values.end(), ""s, accumulateResultString);
 
 		switch (type)
 		{
-		case encoding::SHA256::outputType::binary:
+		case encoding::SHA256::OutputType::binary:
 			return result;
 
-		case encoding::SHA256::outputType::hexadecimal:
+		case encoding::SHA256::OutputType::hexadecimal:
 			return hexConversion(result);
 
 		default:
-			throw runtime_error("Unknown error");
+			throw std::runtime_error("Unknown error");
 		}
 	}
 
-	SHA256::SHA256(outputType type)
+	SHA256::SHA256(OutputType type)
 	{
 		data.reserve(sha256StringSize);
 
 		this->clear(type);
 	}
 
-	SHA256::SHA256(const string& data, outputType type)
+	SHA256::SHA256(const std::string& data, OutputType type)
 	{
 		this->data.reserve(sha256StringSize);
 
@@ -263,7 +263,7 @@ namespace encoding
 		return *this;
 	}
 
-	void SHA256::update(const string& data)
+	void SHA256::update(const std::string& data)
 	{
 		for (const auto& i : data)
 		{
@@ -272,18 +272,20 @@ namespace encoding
 
 			if (this->data.size() == sha256StringSize)
 			{
-				mainLoop(string_view(this->data.data(), sha256StringSize), currentValues);
+				mainLoop(std::string_view(this->data.data(), sha256StringSize), currentValues);
 
 				this->data.clear();
 			}
 		}
 	}
 
-	string SHA256::getHash()
+	std::string SHA256::getHash()
 	{
-		string binaryData = data;
-		string result;
-		vector<uint32_t> savedValues = currentValues;
+		using namespace std::string_literals;
+
+		std::string binaryData = data;
+		std::string result;
+		std::vector<uint32_t> savedValues = currentValues;
 
 		result.reserve(sha256InBitsSize);
 
@@ -292,14 +294,14 @@ namespace encoding
 			uint64_t size = currentSize * 8;
 			char* ptr = reinterpret_cast<char*>(&size) + sizeof(size) - 1; // big-endian
 
-			appendBit(binaryData, appendType::one);
+			appendBit(binaryData, AppendType::one);
 
 			while (binaryData.size() != sha256StringSize)
 			{
-				appendBit(binaryData, appendType::zero);
+				appendBit(binaryData, AppendType::zero);
 			}
 
-			mainLoop(string_view(binaryData.data(), sha256StringSize), currentValues);
+			mainLoop(std::string_view(binaryData.data(), sha256StringSize), currentValues);
 
 			memset(binaryData.data(), NULL, sha256StringSize - sizeof(size));
 
@@ -310,16 +312,16 @@ namespace encoding
 		}
 		else
 		{
-			appendBit(binaryData, appendType::one);
+			appendBit(binaryData, AppendType::one);
 
 			while (binaryData.size() != sha256StringSize - sizeof(uint64_t))
 			{
-				appendBit(binaryData, appendType::zero);
+				appendBit(binaryData, AppendType::zero);
 			}
 
-			binaryData += [this]() -> string
+			binaryData += [this]() -> std::string
 			{
-				string tem;
+				std::string tem;
 				uint64_t size = 0;
 				char* ptr = reinterpret_cast<char*>(&size) + sizeof(size) - 1; // big-endian
 
@@ -335,36 +337,36 @@ namespace encoding
 			}();
 		}
 
-		mainLoop(string_view(binaryData.data(), sha256StringSize), currentValues);
+		mainLoop(std::string_view(binaryData.data(), sha256StringSize), currentValues);
 
-		result = accumulate(currentValues.begin(), currentValues.end(), ""s, accumulateResultString);
+		result = std::accumulate(currentValues.begin(), currentValues.end(), ""s, accumulateResultString);
 
-		currentValues = move(savedValues);
+		currentValues = std::move(savedValues);
 
 		switch (type)
 		{
-		case outputType::binary:
+		case OutputType::binary:
 			return result;
 
-		case outputType::hexadecimal:
+		case OutputType::hexadecimal:
 			return hexConversion(result);
 
 		default:
-			throw runtime_error("Unknown outputType value");
+			throw std::runtime_error("Unknown outputType value");
 		}
 	}
 
-	void SHA256::setOutputType(outputType type)
+	void SHA256::setOutputType(OutputType type)
 	{
 		this->type = type;
 	}
 
-	SHA256::outputType SHA256::getOutputType() const
+	SHA256::OutputType SHA256::getOutputType() const
 	{
 		return type;
 	}
 
-	void SHA256::clear(outputType type) noexcept
+	void SHA256::clear(OutputType type) noexcept
 	{
 		currentSize = 0;
 		currentValues = { h0, h1, h2, h3, h4, h5, h6, h7 };
@@ -372,26 +374,26 @@ namespace encoding
 		data.clear();
 	}
 
-	ostream& operator << (ostream& stream, SHA256& sha)
+	std::ostream& operator << (std::ostream& stream, SHA256& sha)
 	{
 		return stream << sha.getHash();
 	}
 }
 
 template<typename T>
-string toBinary(const T& value)
+std::string toBinary(const T& value)
 {
-	return (ostringstream() << bitset<sizeof(T) * bitsInByte>(value)).str();
+	return (std::ostringstream() << std::bitset<sizeof(T) * bitsInByte>(value)).str();
 }
 
-string rightRotate(const string& binaryString, uint32_t count)
+std::string rightRotate(const std::string& binaryString, uint32_t count)
 {
 	count = static_cast<uint32_t>(binaryString.size()) - count;
-	string tem = binaryString;
+	std::string tem = binaryString;
 
-	reverse(tem.begin(), tem.begin() + count);
-	reverse(tem.begin() + count, tem.end());
-	reverse(tem.begin(), tem.end());
+	std::reverse(tem.begin(), tem.begin() + count);
+	std::reverse(tem.begin() + count, tem.end());
+	std::reverse(tem.begin(), tem.end());
 
 	return tem;
 }
@@ -409,23 +411,23 @@ uint32_t rightShift(uint32_t value, uint32_t count)
 	return value >> count;
 }
 
-void appendBit(string& binaryData, appendType type)
+void appendBit(std::string& binaryData, AppendType type)
 {
 	switch (type)
 	{
-	case appendType::zero:
+	case AppendType::zero:
 		binaryData += static_cast<char>(NULL);
 
 		break;
 
-	case appendType::one:
+	case AppendType::one:
 		binaryData += static_cast<char>(128);
 
 		break;
 	}
 }
 
-string accumulateResultString(const string& currentString, uint32_t nextValue)
+std::string accumulateResultString(const std::string& currentString, uint32_t nextValue)
 {
 	return currentString + toBinary(nextValue);
 }
