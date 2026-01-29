@@ -19,7 +19,7 @@ jobs:
         shared: [[ON, "DLL"], [OFF, ""]]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
   
     - name: Enable NMake
       uses: ilammy/msvc-dev-cmd@v1.13.0
@@ -33,7 +33,7 @@ jobs:
           cmake --install .
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         path: build/install-dir
         name: ${{ matrix.configuration }}${{ matrix.shared[1] }}_Windows
@@ -47,7 +47,7 @@ jobs:
         shared: [[ON, "DLL"], [OFF, ""]]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Build
       run: |
@@ -58,7 +58,7 @@ jobs:
           cmake --install .
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         path: build/install-dir
         name: ${{ matrix.configuration }}${{ matrix.shared[1] }}_Linux
@@ -74,7 +74,7 @@ jobs:
         shared: [[ON, "DLL"], [OFF, ""]]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Build
       run: |
@@ -85,7 +85,7 @@ jobs:
           cmake --install .
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         path: build/install-dir
         name: ${{ matrix.configuration }}${{ matrix.shared[1] }}_LinuxARM
@@ -100,10 +100,10 @@ jobs:
         shared: [[ON, "DLL"], [OFF, ""]]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       with:
         path: SHA256
         name: ${{ matrix.configuration }}${{ matrix.shared[1] }}_Windows
@@ -136,10 +136,10 @@ jobs:
         shared: [[ON, "DLL"], [OFF, ""]]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
   
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       with:
         path: SHA256
         name: ${{ matrix.configuration }}${{ matrix.shared[1] }}_Linux
@@ -171,10 +171,10 @@ jobs:
         shared: [[ON, "DLL"], [OFF, ""]]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
   
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       with:
         path: SHA256
         name: ${{ matrix.configuration }}${{ matrix.shared[1] }}_LinuxARM
@@ -204,10 +204,10 @@ jobs:
         shared: [[ON, "DLL"], [OFF, ""]]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
   
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       with:
         path: SHA256
         name: ${{ matrix.configuration }}${{ matrix.shared[1] }}_Linux
@@ -234,7 +234,7 @@ jobs:
     needs: [windows-tests, linux-tests, linux-aarch64-tests, memory-leak-tests]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
   
     - uses: LazyPanda07/extract-current-branch@master
     
@@ -244,7 +244,7 @@ jobs:
 
     - name: Download artifacts
       if: ${{ env.CURRENT_BRANCH == 'master' }}
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       
     - name: Setup Windows build list
       run: echo "WINDOWS_BUILD_LIST="$(ls | grep Windows)"" >> ${GITHUB_ENV}

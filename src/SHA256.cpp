@@ -132,7 +132,7 @@ namespace encoding
 
 	std::string SHA256::getVersion()
 	{
-		std::string version = "1.7.1";
+		std::string version = "1.7.2";
 
 		return version;
 	}

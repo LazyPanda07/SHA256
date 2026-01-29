@@ -11,7 +11,7 @@ if (${BUILD_SHARED_LIBS})
 	add_definitions(-DSHA256_DLL)
 endif ()
 
-project(SHA256 VERSION 1.7.1)
+project(SHA256 VERSION 1.7.2)
 
 add_library(
 	${PROJECT_NAME}
