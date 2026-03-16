@@ -41,3 +41,4 @@ gtest/
 bin/
 build/
 out/
+SHA256/

@@ -2,9 +2,9 @@
 #include <sstream>
 #include <unordered_map>
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
-#include "SHA256.h"
+#include <SHA256.h>
 
 static const std::unordered_map<std::string, std::string> hashes =
 {
@@ -21,7 +21,7 @@ TEST(SHA256, GenerateHash)
 	{
 		encoding::SHA256 sha(key);
 
-		ASSERT_EQ(sha.getHash(), value);
+		ASSERT_EQ(sha(), value);
 	}
 }
 
@@ -35,7 +35,7 @@ TEST(SHA256, Output)
 
 		os << sha;
 
-		ASSERT_EQ(sha.getHash(), os.str());
+		ASSERT_EQ(sha(), os.str());
 	}
 }
 

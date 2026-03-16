@@ -132,16 +132,16 @@ namespace encoding
 
 	std::string SHA256::getVersion()
 	{
-		std::string version = "1.7.2";
+		std::string version = "1.8.0";
 
 		return version;
 	}
 
-	std::string SHA256::getHash(const std::string& data, OutputType type)
+	std::string SHA256::getHash(std::string_view data, OutputType type)
 	{
 		using namespace std::string_literals;
 
-		std::string binaryData = data;
+		std::string binaryData(data);
 		std::string result;
 
 		result.reserve(sha256InBitsSize);
@@ -216,7 +216,7 @@ namespace encoding
 		this->clear(type);
 	}
 
-	SHA256::SHA256(const std::string& data, OutputType type)
+	SHA256::SHA256(std::string_view data, OutputType type)
 	{
 		this->data.reserve(sha256StringSize);
 
@@ -263,9 +263,9 @@ namespace encoding
 		return *this;
 	}
 
-	void SHA256::update(const std::string& data)
+	void SHA256::update(std::string_view data)
 	{
-		for (const auto& i : data)
+		for (char i : data)
 		{
 			this->data += i;
 			currentSize++;
@@ -372,6 +372,11 @@ namespace encoding
 		currentValues = { h0, h1, h2, h3, h4, h5, h6, h7 };
 		this->type = type;
 		data.clear();
+	}
+
+	std::string SHA256::operator ()()
+	{
+		return this->getHash();
 	}
 
 	std::ostream& operator << (std::ostream& stream, SHA256& sha)

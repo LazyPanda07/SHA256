@@ -84,7 +84,7 @@ namespace encoding
 		/// </summary>
 		/// <returns>SHA256 encoded string</returns>
 		/// <exception cref="std::runtime_error">wrong outputType value</exception>
-		static std::string getHash(const std::string& data, OutputType type = OutputType::hexadecimal);
+		static std::string getHash(std::string_view data, OutputType type = OutputType::hexadecimal);
 
 	public:
 		/// @brief Default constructor
@@ -94,7 +94,7 @@ namespace encoding
 		/// @brief Construct with all data
 		/// @param data Data to encode
 		/// @param type Output type
-		SHA256(const std::string& data, OutputType type = OutputType::hexadecimal);
+		SHA256(std::string_view data, OutputType type = OutputType::hexadecimal);
 
 		/// @brief Copy constructor
 		/// @param other Other SHA256 instance
@@ -118,7 +118,7 @@ namespace encoding
 		/// Update current hash with data
 		/// </summary>
 		/// <param name="data">is for updating current hash</param>
-		void update(const std::string& data);
+		void update(std::string_view data);
 
 		/// <summary>
 		/// Get current calculated hash
@@ -144,6 +144,21 @@ namespace encoding
 		/// </summary>
 		/// <param name="type">outputType enum class value</param>
 		void clear(OutputType type = OutputType::hexadecimal) noexcept;
+
+		/**
+		 * @brief Update and get hash
+		 * @tparam T 
+		 * @param data 
+		 * @return 
+		 */
+		template<std::convertible_to<std::string_view> T>
+		std::string operator ()(const T& data);
+
+		/**
+		 * @brief Get hash
+		 * @return 
+		 */
+		std::string operator ()();
 
 		/// <summary>
 		/// <para>Set to output stream SHA256 encoded data</para>
@@ -172,7 +187,7 @@ namespace encoding
 		/// <returns>SHA256 hash</returns>
 		inline std::string operator ""_sha256(const char* data, size_t size)
 		{
-			return SHA256::getHash(std::string(data, size));
+			return SHA256::getHash(std::string_view(data, size));
 		}
 
 		/// <summary>
@@ -202,8 +217,19 @@ namespace encoding
 		/// <returns>SHA256 hash</returns>
 		inline std::string operator ""_sha256(char data)
 		{
-			return SHA256::getHash(std::string() += data);
+			return SHA256::getHash(std::string_view(&data, 1));
 		}
+	}
+}
+
+namespace encoding
+{
+	template<std::convertible_to<std::string_view> T>
+	inline std::string SHA256::operator ()(const T& data)
+	{
+		this->update(static_cast<std::string_view>(data));
+
+		return (*this)();
 	}
 }
 

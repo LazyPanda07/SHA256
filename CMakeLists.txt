@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.27.0)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 option(BUILD_SHARED_LIBS "" OFF)
 
 if (UNIX)
@@ -11,7 +11,7 @@ if (${BUILD_SHARED_LIBS})
 	add_definitions(-DSHA256_DLL)
 endif ()
 
-project(SHA256 VERSION 1.7.2)
+project(SHA256 VERSION 1.8.0)
 
 add_library(
 	${PROJECT_NAME}
